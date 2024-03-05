@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
+from genericpath import isfile
 import json
 import logging
+import os
 import subprocess
 
 ################### Configurations ###########################
 # Path to the logfile
 LOG_FILE = "smart-monitoring.log"
+# Statefile that saves the latest state of the smart data
+STATE_FILE = "smart-monitoring.state"
 # E-Mail address to send the mails to and from
 TO_ADDR = "tgotowik@example.com"
 FROM_ADDR = ""
@@ -86,11 +90,37 @@ def getSmartData(drives):
 def pprint(data):
     print(json.dumps(data, indent=4))
 
+def writeStateFile(smart_data):
+    """write state to file
+
+    Args:
+        smart_data (dict): actual state data
+    """
+    try:
+        with open(STATE_FILE, 'w') as f:
+            json.dump(smart_data, f)
+    except Exception as e:
+        logging.ERROR(f"Error writeStateData: {e}")
+
+def readStateFile():
+	if isfile(STATE_FILE):
+		try:
+			with open(STATE_FILE, 'r') as f:
+				state_data = json.load(f)
+			return state_data
+		
+		except Exception as e:
+			logging.ERROR(f"Error reading STATE_FILE: {e}")
+
+	else:
+		return dict()
+
 if __name__ == "__main__":
     """Main entry point of the script
     """
     
     logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d.%m.%Y %H:%M:%S')
-    drives = getDrives()
-    smart_data = getSmartData(drives)
-    pprint(smart_data)
+    #drives = getDrives()
+    #smart_data = getSmartData(drives)
+    #writeStateFile(smart_data)
+    pprint(readStateFile())
