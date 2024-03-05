@@ -103,25 +103,30 @@ def writeStateFile(smart_data):
         logging.ERROR(f"Error writeStateData: {e}")
 
 def readStateFile():
-	if isfile(STATE_FILE):
-		try:
-			with open(STATE_FILE, 'r') as f:
-				state_data = json.load(f)
-			return state_data
-		
-		except Exception as e:
-			logging.ERROR(f"Error reading STATE_FILE: {e}")
+    """read state file
 
-	else:
-		return dict()
+    Returns:
+        dict: last time executions smart_data
+    """
+    if isfile(STATE_FILE):
+        try:
+            with open(STATE_FILE, 'r') as f:
+                state_data = json.load(f)
+            return state_data
+        except Exception as e:
+            logging.ERROR(f"Error reading STATE_FILE: {e}")
+    else:
+        return dict()
 
 def compareSmartData(current_smart_data):
-     diff = {}
+    diff = {}
+    
+    latest_smart_data = readStateFile()
 
-     return diff
+    return diff
 
 def checkThreshold():
-     return None
+    return None
 
 if __name__ == "__main__":
     """Main entry point of the script
