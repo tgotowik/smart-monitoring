@@ -6,10 +6,10 @@ import os
 import subprocess
 
 ################### Configurations ###########################
-# Path to the logfile
-LOG_FILE = "smart-monitoring.log"
-# Statefile that saves the latest state of the smart data
-STATE_FILE = "smart-monitoring.state"
+# Path to the logfile, make sure path exists
+LOG_FILE = "/var/log/smart-monitoring/smart-monitoring.log"
+# Statefile that saves the latest state of the smart data, make sure path exists
+STATE_FILE = "/var/log/smart-monitoring/smart-monitoring.state"
 # E-Mail address to send the mails to and from
 TO_ADDR = "tgotowik@example.com"
 FROM_ADDR = ""
@@ -115,12 +115,20 @@ def readStateFile():
 	else:
 		return dict()
 
+def compareSmartData(current_smart_data):
+     diff = {}
+
+     return diff
+
+def checkThreshold():
+     return None
+
 if __name__ == "__main__":
     """Main entry point of the script
     """
     
     logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d.%m.%Y %H:%M:%S')
-    #drives = getDrives()
-    #smart_data = getSmartData(drives)
-    #writeStateFile(smart_data)
+    drives = getDrives()
+    smart_data = getSmartData(drives)
+    writeStateFile(smart_data)
     pprint(readStateFile())
