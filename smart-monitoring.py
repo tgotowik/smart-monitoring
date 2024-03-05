@@ -5,12 +5,12 @@ import subprocess
 
 ################### Configurations ###########################
 # Path to the logfile
-LOG_FILE = "./log"
+LOG_FILE = "smart-monitoring.log"
 # E-Mail address to send the mails to and from
 TO_ADDR = "tgotowik@example.com"
 FROM_ADDR = ""
-# Attributes you want to exclude from the monitoring
-EXCLUDE_ATTRIBUTES = ["Power_On_Hours", "Power_Cycle_Count","Airflow_Temperature_Cel"]
+# smartctl attributes from the table, you want to exclude from the monitoring
+EXCLUDE_ATTRIBUTES = ["Airflow_Temperature_Cel", "temperature"]
 # Type of drives you want to exlucde: Defaults: loop, zram, part, rom
 EXCLUDE_DRIVES_TYPES = ["loop", "part", "zram", "rom"]
 # Drives you want to exclude from monitoring
@@ -32,14 +32,14 @@ def getDrives():
 
     # Check if the command was successful
     if result.returncode != 0:
-        print("Error running lsblk command: {}".format(result.stderr))
+        logging.ERROR("Error running lsblk command: {}".format(result.stderr))
         return drive_list
     
     # Parse the JSON output
     try:
         lsblk_info = json.loads(result.stdout)
     except json.JSONDecodeError as e:
-        print("Error parsing lsblk output: {}".format(e))
+        logging.ERROR("Error parsing lsblk output: {}".format(e))
         return drive_list
 
     for lsblk_item in lsblk_info["blockdevices"]:
@@ -47,7 +47,44 @@ def getDrives():
             drive_list.append(lsblk_item["name"])
 
     return drive_list
-    
+
+def getSmartData(drives):
+    """Execute smartctl command and process the data into a dictionary
+
+    Args:
+        drives (list): drives names
+
+    Returns:
+        dict: drive_name mapped to its smartctl output
+    """
+    smartctl_info = {}
+    # Get smartctl info per drive
+    for drive in drives:
+        if drive not in EXCLUDE_DRIVES:
+            try:
+                command = ["sudo", "smartctl", "-A", "-H", f"/dev/{drive}", "--json"]
+                result = subprocess.run(command, capture_output=True, text=True, check=True)
+            except subprocess.CalledProcessError as e:
+                logging.ERROR(f"Error occured on getSmartdata: {e}")
+
+            # Parse the JSON output
+            try:
+                smartctl_info[drive] = json.loads(result.stdout)
+            except json.JSONDecodeError as e:
+                logging.ERROR("Error parsing smartctl output: {}".format(e))
+                return smartctl_info
+
+    # Exclude attributes, remove them from dict        
+    for attribute_to_delete in EXCLUDE_ATTRIBUTES:
+        for drive in smartctl_info:
+            if attribute_to_delete in smartctl_info[drive]:
+                del smartctl_info[drive][attribute_to_delete]
+
+    return smartctl_info   
+
+# Pretty Print JSON string
+def pprint(data):
+    print(json.dumps(data, indent=4))
 
 if __name__ == "__main__":
     """Main entry point of the script
@@ -55,4 +92,5 @@ if __name__ == "__main__":
     
     logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d.%m.%Y %H:%M:%S')
     drives = getDrives()
-    print(drives)
+    smart_data = getSmartData(drives)
+    pprint(smart_data)
