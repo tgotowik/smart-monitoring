@@ -132,7 +132,18 @@ if __name__ == "__main__":
     """Main entry point of the script
     """
     
+    directory_path = os.path.dirname(LOG_FILE)
+    if not os.path.exists(directory_path):
+        try:
+            os.makedirs(directory_path)
+        except Exception as e:
+            print(f"Use sudo or choose another path for {LOG_FILE} and {STATE_FILE} \n\n")
+            print("Error: ", e)
+
+
     logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d.%m.%Y %H:%M:%S')
+
+    
     drives = getDrives()
     smart_data = getSmartData(drives)
     writeStateFile(smart_data)
