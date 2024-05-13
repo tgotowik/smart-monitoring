@@ -66,19 +66,25 @@ def getSmartData(drives):
     # Get smartctl info per drive
     for drive in drives:
         if drive not in EXCLUDE_DRIVES:
+            result = None
             try:
-                command = ["sudo", "smartctl", "-A", "-H", f"/dev/{drive}", "--json"]
+                command = ["sudo", "/usr/sbin/smartctl", "-A", "-H", f"/dev/{drive}", "--json"]
                 result = subprocess.run(command, capture_output=True, text=True, check=True)
             except subprocess.CalledProcessError as e:
                 logging.error(f"Error occured on getSmartdata: {e}")
-                exit(1)
 
-            # Parse the JSON output
-            try:
-                smartctl_info[drive] = json.loads(result.stdout)
-            except json.JSONDecodeError as e:
-                logging.error("Error parsing smartctl output: {}".format(e))
-                return smartctl_info
+            if result is not None:
+                if result.stdout:
+                    # Parse the JSON output
+                    try:
+                        smartctl_info[drive] = json.loads(result.stdout)
+                    except json.JSONDecodeError as e:
+                        logging.error("Error parsing smartctl output: {}".format(e))
+                        return smartctl_info
+                else:
+                    print(f"smartctl output for {drive} was empty.")
+            else:
+                print(f"Error occured while executing smartctl for {drive}")
 
     # Exclude attributes, remove them from dict        
     for attribute_to_delete in EXCLUDE_ATTRIBUTES:
