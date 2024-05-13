@@ -6,20 +6,20 @@ import os
 import subprocess
 
 ################### Configurations ###########################
-# Path to the logfile, make sure path exists
+# Path to the logfile
 LOG_FILE = "/var/log/smart-monitoring/smart-monitoring.log"
-# Statefile that saves the latest state of the smart data, make sure path exists
+# Statefile that saves the latest state of the smart data
 STATE_FILE = "/var/log/smart-monitoring/smart-monitoring.state"
-# E-Mail address to send the mails to and from
+# E-Mail address to send the mails to
 TO_ADDR = "tgotowik@example.com"
 FROM_ADDR = ""
-# smartctl attributes from the table, you want to exclude from the monitoring
+# smartctl attributes, you want to exclude from monitoring
 EXCLUDE_ATTRIBUTES = ["Airflow_Temperature_Cel", "temperature"]
-# Type of drives you want to exlucde: Defaults: loop, zram, part, rom
+# Type of drives you want to exclude: Defaults: loop, zram, part, rom
 EXCLUDE_DRIVES_TYPES = ["loop", "part", "zram", "rom"]
-# Drives you want to exclude from monitoring
+# Drives you want to exclude monitoring
 EXCLUDE_DRIVES = ["sdc"]
-# This is the indicator of how close the value can come to the threshold
+# This is the indicator of how close the value can come to the threshold before sending a warning
 THRESHOLD_LIMIT = 10
 ##############################################################
 
@@ -86,8 +86,9 @@ def getSmartData(drives):
 
     return smartctl_info   
 
-# Pretty Print JSON string
 def pprint(data):
+    """ Only for debbuging reasons
+    """
     print(json.dumps(data, indent=4))
 
 def writeStateFile(smart_data):
@@ -119,6 +120,8 @@ def readStateFile():
         return dict()
 
 def compareSmartData(current_smart_data):
+    """ TODO: compare last time read smart data with the latest one for changes / threshold
+    """
     diff = {}
     
     latest_smart_data = readStateFile()
@@ -126,6 +129,8 @@ def compareSmartData(current_smart_data):
     return diff
 
 def checkThreshold():
+    """ TODO: Check if the threshold has reached
+    """
     return None
 
 if __name__ == "__main__":
