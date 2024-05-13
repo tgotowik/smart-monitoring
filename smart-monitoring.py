@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import subprocess
+from deepdiff import DeepDiff
 
 ################### Configurations ###########################
 # Path to the logfile
@@ -36,14 +37,14 @@ def getDrives():
 
     # Check if the command was successful
     if result.returncode != 0:
-        logging.ERROR("Error running lsblk command: {}".format(result.stderr))
+        logging.error("Error running lsblk command: {}".format(result.stderr))
         return drive_list
     
     # Parse the JSON output
     try:
         lsblk_info = json.loads(result.stdout)
     except json.JSONDecodeError as e:
-        logging.ERROR("Error parsing lsblk output: {}".format(e))
+        logging.error("Error parsing lsblk output: {}".format(e))
         return drive_list
 
     for lsblk_item in lsblk_info["blockdevices"]:
@@ -69,13 +70,14 @@ def getSmartData(drives):
                 command = ["sudo", "smartctl", "-A", "-H", f"/dev/{drive}", "--json"]
                 result = subprocess.run(command, capture_output=True, text=True, check=True)
             except subprocess.CalledProcessError as e:
-                logging.ERROR(f"Error occured on getSmartdata: {e}")
+                logging.error(f"Error occured on getSmartdata: {e}")
+                exit(1)
 
             # Parse the JSON output
             try:
                 smartctl_info[drive] = json.loads(result.stdout)
             except json.JSONDecodeError as e:
-                logging.ERROR("Error parsing smartctl output: {}".format(e))
+                logging.error("Error parsing smartctl output: {}".format(e))
                 return smartctl_info
 
     # Exclude attributes, remove them from dict        
@@ -101,7 +103,7 @@ def writeStateFile(smart_data):
         with open(STATE_FILE, 'w') as f:
             json.dump(smart_data, f)
     except Exception as e:
-        logging.ERROR(f"Error writeStateData: {e}")
+        logging.error(f"Error writeStateData: {e}")
 
 def readStateFile():
     """read state file
@@ -115,7 +117,7 @@ def readStateFile():
                 state_data = json.load(f)
             return state_data
         except Exception as e:
-            logging.ERROR(f"Error reading STATE_FILE: {e}")
+            logging.error(f"Error reading STATE_FILE: {e}")
     else:
         return dict()
 
@@ -125,6 +127,8 @@ def compareSmartData(current_smart_data):
     diff = {}
     
     latest_smart_data = readStateFile()
+
+    print(DeepDiff(latest_smart_data, current_smart_data))
 
     return diff
 
@@ -152,4 +156,5 @@ if __name__ == "__main__":
     drives = getDrives()
     smart_data = getSmartData(drives)
     writeStateFile(smart_data)
-    pprint(readStateFile())
+    #pprint(readStateFile())
+    compareSmartData(smart_data)
